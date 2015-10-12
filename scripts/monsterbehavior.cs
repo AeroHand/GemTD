@@ -114,6 +114,9 @@ public class monsterbehavior : MonoBehaviour {
             deathflag = false;
             c2.monstercount -= 1;
             c2.endflag = true;
+            c2.totalenergy += 5;
+            c2.curenergy += 5;
+            
             Destroy(this.gameObject);
             
         }

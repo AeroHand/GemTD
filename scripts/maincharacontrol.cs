@@ -1,21 +1,34 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class maincharacontrol : MonoBehaviour
 {
+    public Text energyshow;
+    public Text towername;
+    public Text towerlevel;
+    public Text towerdescription;
+    public Image towerimage;
 
     public string curgamestate;                 //状态机
     public int wavenumber = 1;                      //波数
     public int curgemcount;                     //本波宝石数量
     public int pathstartpoint;
-    public Object[][] gems = new Object[7][];     //可出现宝石种类
+    public Object[] gems = new Object[8];     //可出现宝石种类
     public Object wallunit;                     //墙
     public int curx = 0;                        //x，y 现有的xy
     public int cury = 0;
     public GameObject[][] mazegem = new GameObject[37][];
     public Object projectile;      //子弹
 
+    private string[] basename;
+    private string[] basedescription;
+    public Sprite[] baseimage=new Sprite[8];
+
     public int[][] mazedir = new int[37][];
+    public int[][] mazerep = new int[37][];
+    public int[][] mazelv = new int[37][];
+
     //迷宫
     public int[] listx;
     public int[] listy;
@@ -47,9 +60,19 @@ public class maincharacontrol : MonoBehaviour
     public GameObject birthvector;
     public bool endflag;
 
+    public int totalenergy;  //whole energy
+    public int curenergy;    //current energy
+    public int energylevel;  //the level of energy
+
     // Use this for initialization
     void Start()
     {
+
+
+        totalenergy = 0;
+        curenergy = 0;
+        energylevel = 1;
+
         monstercount = 0;
         endflag = false;
         curgemcount = 5;
@@ -68,7 +91,14 @@ public class maincharacontrol : MonoBehaviour
         {
             mazegem[i] = new GameObject[37];
             mazedir[i] = new int[37];
+            mazerep[i] = new int[37];
+            mazelv[i] = new int[37];
             monsterarray[i] = new GameObject[10];
+            for (int j = 0; j <= 36; j++)
+            {
+                mazerep[i][j] = 0;
+                mazelv[i][j] = 0;
+            }
         }
 
         //预载入所有怪物
@@ -77,15 +107,47 @@ public class maincharacontrol : MonoBehaviour
             //Debug.Log("JellyMonsters/Prefabs/Jelly" + i.ToString());
             cachemonster[i] = Resources.Load("JellyMonsters/Prefabs/Jelly" + i.ToString());
         }
-        //预载入所有宝石
-        for (int i = 1; i <= 1; i++)
-        {
-            gems[i] = new Object[7];
-            for (int j = 1; j < 7; j++)
-            {
-                gems[i][j] = Resources.Load("gem/grey" + j.ToString());
 
-            }
+
+        //预载入所有宝石
+        //1--grey
+        //2--red
+        //3--blue
+        //4--yellow
+        //5--diamond
+        //6--jadeite
+        //7--opal
+        //baseimage = new Sprite[8];
+        basename = new string[8] {"Empty ground",
+        "Grey Gem",
+            "Red Gem",
+            "Blue Gem",
+            "Yellow Gem",
+            "Diamond",
+            "Jadeite",
+            "Opal"
+        };
+
+        basedescription = new string[8] {" Don't bother. Nothing is here.",
+            " Dim but deadly fast XD. \n Ability: Fast attack Speed",
+            " Shining red, could cause small shockwave \n when attacks. \n Ability: Splash",
+            " Frozen touches. \n Ability: Slow",
+            " Glorious gold. \n Ability: Multiple attack",
+            " Unbelievable solid. \n Ability: High attack dmg",
+            " Like snakes. \n Ability: Poison touch",
+            " Gentle feeSl. \n Ability: Attack speed aura" };
+        //baseimage = new Sprite[8];
+        //baseimage[0] = Resources.Load("gemimage/0") as Sprite;
+        //towerimage.sprite = baseimage[0];
+        for (int i = 1; i <= 7; i++)
+        {
+            //gems[i] = new Object[7];
+            //for (int j = 1; j < 7; j++)
+            //{
+            gems[i] = Resources.Load("basegem/" + i.ToString());
+            //baseimage[i] = Resources.Load("gemimage/" + i.ToString()) as Sprite;
+
+            //}
         }
 
         //预载入子弹
@@ -107,7 +169,14 @@ public class maincharacontrol : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (curgamestate == "attacking" && monstercount <= 0 && endflag && monsternum<=0)
+        energylevel = Mathf.FloorToInt(totalenergy / 100F) + 1;
+        energyshow.text = "Energy:" + curenergy.ToString() + "/" + totalenergy.ToString();
+        if (energylevel > 5)
+        {
+            energylevel = 5;
+        }
+
+        if (curgamestate == "attacking" && monstercount <= 0 && endflag && monsternum <= 0)
         {
             //start new round
             endflag = false;
@@ -239,10 +308,12 @@ public class maincharacontrol : MonoBehaviour
                     if (!(listx[i] == curx && listy[i] == cury))
                     {
                         //replace this gem with wall
-                        GameObject tempwall = Instantiate(wallunit, mazegem[listx[i]][listy[i]].transform.position, mazegem[listx[i]][listy[i]].transform.rotation) as GameObject;
+                        GameObject tempwall = Instantiate(wallunit, mazegem[listx[i]][listy[i]].transform.position, transform.rotation) as GameObject;
                         Object.Destroy(mazegem[listx[i]][listy[i]], 0);
-                        mazegem[curx][cury] = tempwall;
-                        mazedir[curx][cury] = -1;
+                        mazegem[listx[i]][listy[i]] = tempwall;
+                        mazerep[listx[i]][listy[i]] = -1;
+                        mazelv[listx[i]][listy[i]] = 0;
+                        //mazedir[curx][cury] = -1;
                     }
                 }
                 listpointer = 0;
@@ -262,11 +333,108 @@ public class maincharacontrol : MonoBehaviour
             if ((mazegem[curx][cury] == null) && checkpathcorner())
             {
                 //造塔
-                int tempgem = 1;
-                int tempgemnum = Mathf.RoundToInt(Random.Range(1.0f, 5.0f));
+                //int tempgem = 1;
+                int tempgemnum = Mathf.FloorToInt(Random.Range(1.0f, 7.999f));
+                //Debug.Log(tempgemnum);
+                mazegem[curx][cury] = Instantiate(gems[tempgemnum], this.transform.position, this.transform.rotation) as GameObject;
+                mazerep[curx][cury] = tempgemnum;
 
-                mazegem[curx][cury] = Instantiate(gems[tempgem][tempgemnum], this.transform.position, this.transform.rotation) as GameObject;
+                int tempgemlevelpossibility = Mathf.RoundToInt(Random.Range(0.6f, 10.4f));
 
+                int tempgemlevel;
+
+                switch (energylevel)
+                {
+                    case 1: tempgemlevel = 1; break;
+                    case 2:
+                        if (tempgemlevelpossibility <= 8)
+                        {
+                            tempgemlevel = 1;
+                        }
+                        else
+                        {
+                            tempgemlevel = 2;
+                        }
+                        break;
+                    case 3:
+                        if (tempgemlevelpossibility <= 6)
+                        {
+                            tempgemlevel = 1;
+                        }
+                        else
+                        {
+                            if (tempgemlevelpossibility <= 8)
+                            {
+                                tempgemlevel = 2;
+                            }
+                            else
+                            {
+                                tempgemlevel = 3;
+                            }
+                        }
+                        break;
+                    case 4:
+                        if (tempgemlevelpossibility <= 4)
+                        {
+                            tempgemlevel = 1;
+                        }
+                        else
+                        {
+                            if (tempgemlevelpossibility <= 7)
+                            {
+                                tempgemlevel = 2;
+                            }
+                            else
+                            {
+                                if (tempgemlevelpossibility <= 9)
+                                {
+                                    tempgemlevel = 3;
+                                }
+                                else
+                                {
+                                    tempgemlevel = 4;
+                                }
+                            }
+                        }
+                        break;
+                    case 5:
+                        if (tempgemlevelpossibility <= 3)
+                        {
+                            tempgemlevel = 1;
+                        }
+                        else
+                        {
+                            if (tempgemlevelpossibility <= 5)
+                            {
+                                tempgemlevel = 2;
+                            }
+                            else
+                            {
+                                if (tempgemlevelpossibility <= 7)
+                                {
+                                    tempgemlevel = 3;
+                                }
+                                else
+                                {
+                                    if (tempgemlevelpossibility <= 9)
+                                    {
+                                        tempgemlevel = 4;
+                                    }
+                                    else
+                                    {
+                                        tempgemlevel = 5;
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                        Debug.Log("u r screwed in energylv stuff");
+                        Debug.Log(tempgemlevelpossibility);
+                        tempgemlevel = 1;
+                        break;
+                }
+                mazelv[curx][cury] = tempgemlevel;
                 mazedir[curx][cury] = -1;
 
                 listx[listpointer] = curx;
@@ -281,6 +449,30 @@ public class maincharacontrol : MonoBehaviour
                 }
             }
         }
+
+        //UI update stuff
+
+        switch (mazerep[curx][cury])
+        {
+            case -1:
+                towername.text = "Wall";
+                towerlevel.text = "";
+                towerimage.GetComponent<Image>().sprite = baseimage[0];
+                
+                towerdescription.text = "An unless wall just to block those stupid creeps.";
+                break;
+            default:
+                towername.text = basename[mazerep[curx][cury]];
+                towerlevel.text = "Level " + mazelv[curx][cury].ToString();
+                towerdescription.text = basedescription[mazerep[curx][cury]];
+                //Debug.Log(mazerep[curx][cury]);
+                towerimage.GetComponent<Image>().sprite = baseimage[mazerep[curx][cury]];
+                
+                break;
+        }
+
+
+
     }
 
 
@@ -333,6 +525,8 @@ public class maincharacontrol : MonoBehaviour
         GameObject tempwall = Instantiate(wallunit, basevector.transform.position + Vector3.right * wx * 2 + Vector3.back * wy * 2, transform.rotation) as GameObject;
         mazegem[wx][wy] = tempwall;
         mazedir[wx][wy] = -1;
+        mazerep[wx][wy] = -1;
+        mazelv[wx][wy] = 0;
     }
 
     private void checkvalid(int ma, int mb, int dir)

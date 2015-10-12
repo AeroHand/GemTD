@@ -12,7 +12,7 @@ public class towercontrol : MonoBehaviour
     public float poisontime;
 
 
-    public GameObject[] target = new GameObject[10];
+    public GameObject[] target = new GameObject[11];
     public int multinum;
     public int multimax;
     public float shotspeed;
@@ -42,14 +42,33 @@ public class towercontrol : MonoBehaviour
             {
                 if (!(target[i] == null))
                 {
-                    shottimer = Time.time;
-                    GameObject temp = (Instantiate(c2.projectile, this.transform.position, this.transform.rotation)) as GameObject;
-                    bullet tempbullet = temp.GetComponent<bullet>();
-                    tempbullet.targetenemy = target[i];
-                    tempbullet.frozen = freeze;
+                    if ((Vector3.Distance(this.transform.position, target[i].transform.position)) < 8f)
+                    {
+                        shottimer = Time.time;
+                        GameObject temp = (Instantiate(c2.projectile, this.transform.position, this.transform.rotation)) as GameObject;
 
-                    tempbullet.poison = poisonlevel;
-                    tempbullet.poisontime = poisontime;
+
+
+
+
+                        bullet tempbullet = temp.GetComponent<bullet>();
+                        tempbullet.targetenemy = target[i];
+                        tempbullet.frozen = freeze;
+
+                        tempbullet.poison = poisonlevel;
+                        tempbullet.poisontime = poisontime;
+                    }
+                    else {
+                        for (int j = i; j < multinum; j++)
+                        {
+                            target[j] = target[j + 1];
+                        }
+                        target[multinum] = null;
+                        multinum -= 1;
+
+                    }
+
+
                 }
             }
         }
@@ -80,21 +99,21 @@ public class towercontrol : MonoBehaviour
         
     }
 
-    void OnTriggerExit(Collider other)
-    {
-        if (other.gameObject.tag == "enemy")
-        {
-            for (int i = 1; i <= multinum; i++)
-            {
-                if (target[i] == other.gameObject)
-                {
-                    for (int j = i; j < multinum; j++)
-                    {
-                        target[j] = target[j + 1];
-                    }
-                    multinum -= 1;
-                }
-            }
-        }
-    }
+    //void OnTriggerExit(Collider other)
+    //{
+    //    if (other.gameObject.tag == "enemy")
+    //    {
+    //        for (int i = 1; i <= multinum; i++)
+    //        {
+    //            if (target[i] == other.gameObject)
+    //            {
+    //                for (int j = i; j < multinum; j++)
+    //                {
+    //                    target[j] = target[j + 1];
+    //                }
+    //                multinum -= 1;
+    //            }
+    //        }
+    //    }
+    //}
 }
