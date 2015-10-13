@@ -21,7 +21,7 @@ public class bullet : MonoBehaviour {
 
     // Use this for initialization
     void Start () {
-        atkdmg = 10;
+        //atkdmg = 10;
         //frozen = 0;
         prospeed = 0.2F;
 

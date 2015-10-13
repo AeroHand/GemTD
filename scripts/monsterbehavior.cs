@@ -19,6 +19,7 @@ public class monsterbehavior : MonoBehaviour {
     //private Vector3 thispos;
     private Vector3 nextpos;
     public float health;
+    public float fullhealth;
     maincharacontrol c2 = null;
 
     private GameObject gbar;
@@ -44,7 +45,7 @@ public class monsterbehavior : MonoBehaviour {
         }
         poisonpointer = 0;
 
-        health = 80;
+        //health = 80;
         pathnum = 1;
         speed = 0.1F;
         startTime = Time.time;
@@ -58,8 +59,8 @@ public class monsterbehavior : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         //update health bar
-        gbar.transform.localScale = new Vector3(health / 80F*0.8F, 0.101F,0.101F);
-        gbar.transform.position = hbar.transform.position + Vector3.left * (80-health)/160*0.8F*2;
+        gbar.transform.localScale = new Vector3(health / fullhealth*0.8F, 0.101F,0.101F);
+        gbar.transform.position = hbar.transform.position + Vector3.left * (fullhealth-health)/(fullhealth*2)*0.8F*2;
         //thispos = c2.basevector.transform.position+Vector3.right * c2.pathx[pathnum] * 2 + Vector3.back * c2.pathy[pathnum] * 2;
         //thispos = transform.position;
         nextpos = c2.basevector.transform.position+Vector3.right * c2.pathx[pathnum + 1] * 2 + Vector3.back * c2.pathy[pathnum + 1] * 2;
@@ -108,7 +109,7 @@ public class monsterbehavior : MonoBehaviour {
             }
             ii++;
         }
-        health -= poisondmg * 0.2F;
+        health -= poisondmg * 0.02F;
 
         if ((health <= 0)&&(deathflag)) {
             deathflag = false;

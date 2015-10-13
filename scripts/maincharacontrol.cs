@@ -4,11 +4,33 @@ using System.Collections;
 
 public class maincharacontrol : MonoBehaviour
 {
+    //crafting list
+    public int[][] craftlist;
+
+
+    //tower stats
+    public int[][] toweratk;
+    public int[][] toweratkspd;
+
+    //creep stats
+    public int[] creephp;
+    public float[] creepspeed;
+
+    //UI components
     public Text energyshow;
+    public Text waveinfo;
     public Text towername;
     public Text towerlevel;
     public Text towerdescription;
     public Image towerimage;
+
+    //UI abilities
+    public Image buildbt;
+    public Image up1bt;
+    public Image up2bt;
+    public Image craftbt;
+    public Image eliminatebt;
+
 
     public string curgamestate;                 //状态机
     public int wavenumber = 1;                      //波数
@@ -23,6 +45,10 @@ public class maincharacontrol : MonoBehaviour
 
     private string[] basename;
     private string[] basedescription;
+
+    private bool vyes;
+    private bool yyes; 
+    
     public Sprite[] baseimage=new Sprite[8];
 
     public int[][] mazedir = new int[37][];
@@ -67,12 +93,38 @@ public class maincharacontrol : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        creephp = new int[27] {
+            0,3,8,20,25,30,100,100,110,120,900,300,500,800,1300,400,1200,1000,1800,2000,7500,6000,8000,4000,8000,3000,9000
+        };
 
+        //creepspeed = new float[10] {
+        //};
+
+        //1--grey
+        //2--red
+        //3--blue
+        //4--yellow
+        //5--diamond
+        //6--jadeite
+        //7--opal
+
+        //basic tower info
+
+        toweratk = new int[8][];
+        toweratk[1] = new int[8] { 0, 2, 4, 8, 16, 32, 48,90};  //海晶石
+        toweratk[2] = new int[8] { 0, 4, 8, 12, 16, 20,24 ,80};  //red
+        toweratk[3] = new int[8] { 0, 2, 4, 6, 8, 12, 14, 20};   //blue
+        toweratk[4] = new int[8] { 0, 3, 6, 9, 12, 15,18,80 };   //yellow
+        toweratk[5] = new int[8] { 0, 6, 12, 18, 30, 50,80,100 };   //diamond
+        toweratk[6] = new int[8] { 0, 2, 4, 8, 16, 24,32,48 };    //jadeite
+        toweratk[7] = new int[8] { 0, 1, 2, 3, 4, 5, 6,7};
+        
 
         totalenergy = 0;
         curenergy = 0;
         energylevel = 1;
-
+        vyes = false;
+        yyes = false;
         monstercount = 0;
         endflag = false;
         curgemcount = 5;
@@ -117,7 +169,7 @@ public class maincharacontrol : MonoBehaviour
         //5--diamond
         //6--jadeite
         //7--opal
-        //baseimage = new Sprite[8];
+        
         basename = new string[8] {"Empty ground",
         "Grey Gem",
             "Red Gem",
@@ -164,11 +216,151 @@ public class maincharacontrol : MonoBehaviour
             createwall(18, i);
             createwall(18, i + 32);
         }
+        createwall(18, 36);
+        waveinfo.text = "Next wave: " + wavenumber.ToString();
     }
 
     // Update is called once per frame
     void Update()
     {
+        //UI button update
+
+        if ((curgamestate=="preparing") || (curgamestate == "thinking"))
+        {
+            buildbt.GetComponent<CanvasRenderer>().SetAlpha(1);
+        }
+        else
+        {
+            buildbt.GetComponent<CanvasRenderer>().SetAlpha(0);
+        }
+
+        if ((mazerep[curx][cury]==-1) && (curgamestate != "attacking") )
+        {
+            eliminatebt.GetComponent<CanvasRenderer>().SetAlpha(1);
+            if (Input.GetKey("x"))
+            {
+                Destroy(mazegem[curx][cury]);
+                mazegem[curx][cury] = null;
+                mazedir[curx][cury] = 0;
+                mazerep[curx][cury] = 0;
+                mazelv[curx][cury] = 0;
+            }
+        }
+        else
+        {
+            eliminatebt.GetComponent<CanvasRenderer>().SetAlpha(0);
+        }
+        vyes = false;
+        yyes = false;
+        if (curgamestate == "thinking") {
+            
+            bool checkhere = false;
+            for (int i = 0; i < listpointer; i++) {
+                if ((listx[i]== curx) && (listy[i]==cury))
+                {
+                    checkhere = true;
+                }
+            }
+
+            if (checkhere)
+            {
+                
+
+                float counter = 0f;
+                for (int i = 0; i < listpointer; i++)
+                {
+                    if (mazerep[listx[i]][listy[i]] == mazerep[curx][cury]) {
+                        counter += Mathf.Pow(2,(mazelv[listx[i]][listy[i]] - mazelv[curx][cury]));
+                        
+                    }
+                }
+                //counter = Mathf.Log(counter, 2);
+                if ((counter == 8) || (counter ==4) || (counter == 5)) {
+                    //could do Y operation
+                    //Debug.Log(counter);
+                    yyes = true;
+                    vyes = true;
+                }
+                if ((counter==2)||(counter==3))
+                {
+                    //could do V operation
+                    vyes = true;
+                }
+
+            }
+        }
+
+        if ((curgamestate == "thinking") && vyes)
+        {
+            up1bt.GetComponent<CanvasRenderer>().SetAlpha(1);
+            if (Input.GetKey("v")) {
+                for (int i = 0; i < listpointer; i++)
+                {
+                    if (!(listx[i] == curx && listy[i] == cury))
+                    {
+                        //replace this gem with wall
+                        GameObject tempwall = Instantiate(wallunit, mazegem[listx[i]][listy[i]].transform.position, transform.rotation) as GameObject;
+                        Object.Destroy(mazegem[listx[i]][listy[i]], 0);
+                        mazegem[listx[i]][listy[i]] = tempwall;
+                        mazerep[listx[i]][listy[i]] = -1;
+                        mazelv[listx[i]][listy[i]] = 0;
+                        //mazedir[curx][cury] = -1;
+                    }
+                }
+                //upgrade current gem one level
+                towercontrol temptower = mazegem[curx][cury].GetComponent<towercontrol>();
+                mazelv[curx][cury] += 1;
+                temptower.atkdmg = toweratk[mazerep[curx][cury]][mazelv[curx][cury]];
+                listpointer = 0;
+                curgamestate = "attacking";
+                //计算怪物行进路线
+                pathindicator = 1;
+                holdpath = 1;
+                //刷怪
+                waveinfo.text = "Now defending: wave " + wavenumber.ToString();
+            }
+        }
+        else {
+            up1bt.GetComponent<CanvasRenderer>().SetAlpha(0);
+        }
+
+        if ((curgamestate == "thinking") && yyes)
+        {
+            up2bt.GetComponent<CanvasRenderer>().SetAlpha(1);
+            if (Input.GetKey("y"))
+            {
+                for (int i = 0; i < listpointer; i++)
+                {
+                    if (!(listx[i] == curx && listy[i] == cury))
+                    {
+                        //replace this gem with wall
+                        GameObject tempwall = Instantiate(wallunit, mazegem[listx[i]][listy[i]].transform.position, transform.rotation) as GameObject;
+                        Object.Destroy(mazegem[listx[i]][listy[i]], 0);
+                        mazegem[listx[i]][listy[i]] = tempwall;
+                        mazerep[listx[i]][listy[i]] = -1;
+                        mazelv[listx[i]][listy[i]] = 0;
+                        //mazedir[curx][cury] = -1;
+                    }
+                }
+                //upgrade current gem one level
+                towercontrol temptower = mazegem[curx][cury].GetComponent<towercontrol>();
+                mazelv[curx][cury] += 2;
+                temptower.atkdmg = toweratk[mazerep[curx][cury]][mazelv[curx][cury]];
+                listpointer = 0;
+                curgamestate = "attacking";
+                //计算怪物行进路线
+                pathindicator = 1;
+                holdpath = 1;
+                //刷怪
+                waveinfo.text = "Now defending: wave " + wavenumber.ToString();
+            }
+        }
+        else
+        {
+            up2bt.GetComponent<CanvasRenderer>().SetAlpha(0);
+        }
+
+
         energylevel = Mathf.FloorToInt(totalenergy / 100F) + 1;
         energyshow.text = "Energy:" + curenergy.ToString() + "/" + totalenergy.ToString();
         if (energylevel > 5)
@@ -185,6 +377,7 @@ public class maincharacontrol : MonoBehaviour
             wavenumber += 1;
             curgamestate = "preparing";
             curgemcount = 5;
+            waveinfo.text = "Next wave: " + wavenumber.ToString();
         }
         switch (pathindicator)
         {
@@ -217,8 +410,6 @@ public class maincharacontrol : MonoBehaviour
                 frontierx[1] = 32;
                 frontiery[1] = 18;
                 StartCoroutine(bfs(32, 18, 32, 4, 3));
-                //holdpath += 1;
-                //pathindicator = holdpath;
                 break;
             case 4:
                 pathstartpoint = pathpointer + 1;
@@ -251,7 +442,15 @@ public class maincharacontrol : MonoBehaviour
 
             case 7:
                 //testprintpath();
-                monsternum = 10;
+                if (wavenumber % 10 == 0)
+                {
+                    //boss wave, just one creep spawned
+                    monsternum = 1;
+                }
+                else
+                {
+                    monsternum = 10;
+                }
                 monstercount = 0;
                 pathindicator += 1;
                 break;
@@ -264,6 +463,9 @@ public class maincharacontrol : MonoBehaviour
             nextcreep = Time.time + creeptime;
             monsterarray[wavenumber][10 - monsternum] = Instantiate(cachemonster[1], birthvector.transform.position, birthvector.transform.rotation) as GameObject;
             monsterarray[wavenumber][10 - monsternum].tag = "enemy";
+            monsterbehavior tempmonster = monsterarray[wavenumber][10 - monsternum].GetComponent<monsterbehavior>();
+            tempmonster.health = creephp[wavenumber];
+            tempmonster.fullhealth= creephp[wavenumber];
             monsternum -= 1;
             monstercount += 1;
         }
@@ -322,7 +524,7 @@ public class maincharacontrol : MonoBehaviour
                 pathindicator = 1;
                 holdpath = 1;
                 //刷怪
-
+                waveinfo.text = "Now defending: wave " + wavenumber.ToString();
 
 
             }
@@ -333,9 +535,9 @@ public class maincharacontrol : MonoBehaviour
             if ((mazegem[curx][cury] == null) && checkpathcorner())
             {
                 //造塔
-                //int tempgem = 1;
+                
                 int tempgemnum = Mathf.FloorToInt(Random.Range(1.0f, 7.999f));
-                //Debug.Log(tempgemnum);
+                
                 mazegem[curx][cury] = Instantiate(gems[tempgemnum], this.transform.position, this.transform.rotation) as GameObject;
                 mazerep[curx][cury] = tempgemnum;
 
@@ -434,6 +636,17 @@ public class maincharacontrol : MonoBehaviour
                         tempgemlevel = 1;
                         break;
                 }
+
+                towercontrol temptower = mazegem[curx][cury].GetComponent<towercontrol>();
+                temptower.atkdmg = toweratk[tempgemnum][tempgemlevel];
+                if (tempgemnum == 1)
+                {
+                    temptower.shotspeed = 0.1f;
+                }
+                else {
+                    temptower.shotspeed = 0.5f;
+                }
+
                 mazelv[curx][cury] = tempgemlevel;
                 mazedir[curx][cury] = -1;
 
