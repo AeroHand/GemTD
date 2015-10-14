@@ -6,7 +6,10 @@ public class maincharacontrol : MonoBehaviour
 {
     //crafting list
     public int[][] craftlist;
+    public int[][] craftcounter;
 
+    //crafted towerlist
+    public Object[] crafttower;
 
     //tower stats
     public int[][] toweratk;
@@ -54,17 +57,22 @@ public class maincharacontrol : MonoBehaviour
     public int[][] mazedir = new int[37][];
     public int[][] mazerep = new int[37][];
     public int[][] mazelv = new int[37][];
+    public int[][] mazefuture = new int[37][];
 
     //迷宫
-    public int[] listx;
+    public int[] listx;                        //five gems built this round
     public int[] listy;
     public int listpointer = 0;
 
-    public int[] pathx = new int[8000];
+    public int[] oldx;                         //all the gems built in the past
+    public int[] oldy;                         
+    public int oldpointer = 0;
+
+    public int[] pathx = new int[8000];       //correct path
     public int[] pathy = new int[8000];
     public int pathpointer;
 
-    public int[] frontierx = new int[5000];
+    public int[] frontierx = new int[5000];   //helper for finding path
     public int[] frontiery = new int[5000];
     public int frontierpointer;
 
@@ -118,7 +126,15 @@ public class maincharacontrol : MonoBehaviour
         toweratk[5] = new int[8] { 0, 6, 12, 18, 30, 50,80,100 };   //diamond
         toweratk[6] = new int[8] { 0, 2, 4, 8, 16, 24,32,48 };    //jadeite
         toweratk[7] = new int[8] { 0, 1, 2, 3, 4, 5, 6,7};
-        
+
+        //craftlist
+        craftlist = new int[10][];
+
+        craftlist[1] = new int[5] { 0, 21, 31, 41, 1 };
+
+        craftcounter = new int[10][];
+
+        craftcounter[1] = new int[5] { 0,0,0,0,0};
 
         totalenergy = 0;
         curenergy = 0;
@@ -136,6 +152,9 @@ public class maincharacontrol : MonoBehaviour
         Time.timeScale = 0.5F;
         listx = new int[6];
         listy = new int[6];
+        oldx = new int[500];
+        oldy = new int[500];
+        oldpointer = 0;
         birthvector = GameObject.Find("birthpoint");
         basevector = GameObject.Find("basepoint");
 
@@ -145,11 +164,13 @@ public class maincharacontrol : MonoBehaviour
             mazedir[i] = new int[37];
             mazerep[i] = new int[37];
             mazelv[i] = new int[37];
+            mazefuture[i] = new int[37];
             monsterarray[i] = new GameObject[10];
             for (int j = 0; j <= 36; j++)
             {
                 mazerep[i][j] = 0;
                 mazelv[i][j] = 0;
+                mazefuture[i][j] = 0;
             }
         }
 
@@ -318,6 +339,11 @@ public class maincharacontrol : MonoBehaviour
                 holdpath = 1;
                 //刷怪
                 waveinfo.text = "Now defending: wave " + wavenumber.ToString();
+                //update old lists of gems
+                oldpointer += 1;
+                oldx[oldpointer] = curx;
+                oldy[oldpointer] = cury;
+                checkmazefuture(mazelv[curx][cury]+mazerep[curx][cury]*10);
             }
         }
         else {
@@ -353,12 +379,39 @@ public class maincharacontrol : MonoBehaviour
                 holdpath = 1;
                 //刷怪
                 waveinfo.text = "Now defending: wave " + wavenumber.ToString();
+                //update old lists of gems
+                oldpointer += 1;
+                oldx[oldpointer] = curx;
+                oldy[oldpointer] = cury;
+                checkmazefuture(mazelv[curx][cury] + mazerep[curx][cury] * 10);
             }
         }
         else
         {
             up2bt.GetComponent<CanvasRenderer>().SetAlpha(0);
         }
+
+        if ((curgamestate == "attacking")&&(mazefuture[curx][cury]!=0)) {
+            craftbt.GetComponent<CanvasRenderer>().SetAlpha(1);
+
+            if (Input.GetKey("c"))
+            {
+                
+                
+                GameObject tempgem = Instantiate(crafttower[mazefuture[curx][cury]], mazegem[curx][cury].transform.position, transform.rotation) as GameObject;
+                Destroy(mazegem[curx][cury]);
+                mazegem[curx][cury] = tempgem;
+                mazefuture[curx][cury] = 0;
+                mazerep[curx][cury] = 11;
+                mazelv[curx][cury] = 1;
+            }
+
+        }
+        else
+        {
+            craftbt.GetComponent<CanvasRenderer>().SetAlpha(0);
+        }
+
 
 
         energylevel = Mathf.FloorToInt(totalenergy / 100F) + 1;
@@ -525,7 +578,11 @@ public class maincharacontrol : MonoBehaviour
                 holdpath = 1;
                 //刷怪
                 waveinfo.text = "Now defending: wave " + wavenumber.ToString();
-
+                //update old lists of gems
+                oldpointer += 1;
+                oldx[oldpointer] = curx;
+                oldy[oldpointer] = cury;
+                checkmazefuture(mazelv[curx][cury] + mazerep[curx][cury] * 10);
 
             }
         }
@@ -686,6 +743,34 @@ public class maincharacontrol : MonoBehaviour
 
 
 
+    }
+
+
+    private void checkmazefuture(int curtowertoken)
+    {
+        //check if any upgraded tower could be fulfilled
+        for (int i = 1; i <= 1; i++)
+        {
+            //int tempcount = 0;
+            bool craftyes=true;
+            for (int j = 1; j <= 3; j++)
+            {
+                if (craftlist[i][j] == curtowertoken)
+                {
+                    craftcounter[i][j] += 1;
+                }
+                if (craftcounter[i][j] == 0) {
+                    craftyes = false;
+                }
+            }
+            if (craftyes) {
+                //change all the future value
+                //todo
+                mazefuture[curx][cury] = craftlist[i][4];
+            }
+
+        }
+        //if any change their mazefuture value
     }
 
 
