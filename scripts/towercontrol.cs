@@ -20,7 +20,7 @@ public class towercontrol : MonoBehaviour
     public float shotspeed;
     public float shottimer;
     maincharacontrol c2 = null;
-
+    public bool fast;
     // Use this for initialization
     void Start()
     {
@@ -53,7 +53,7 @@ public class towercontrol : MonoBehaviour
                     bullet tempbullet = temp.GetComponent<bullet>();
                     tempbullet.targetenemy = target[i];
                     tempbullet.frozen = freeze;
-
+                    tempbullet.fast = fast;
                     tempbullet.poison = poisonlevel;
                     tempbullet.poisontime = poisontime;
 

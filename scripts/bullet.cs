@@ -19,6 +19,13 @@ public class bullet : MonoBehaviour {
     public int poison;  //poision ability
     public float poisontime;
 
+    public bool fast = false;
+    public Object fastparticle;
+    public Object freezeparticle;
+    public Object poisonparticle;
+    //public Object fastparticle;
+
+
     // Use this for initialization
     void Start () {
         //atkdmg = 10;
@@ -56,6 +63,14 @@ public class bullet : MonoBehaviour {
                 {
                     tempscript.freeze[frozen] = true;
                     tempscript.freezetimer[frozen] = 3F;
+                    Destroy(Instantiate(freezeparticle, this.transform.position, this.transform.rotation), 0.5f);
+                }
+                if (poison >0) {
+                    Destroy(Instantiate(poisonparticle, this.transform.position, this.transform.rotation), 0.5f);
+                }
+
+                if (fast) {
+                    Destroy(Instantiate(fastparticle, this.transform.position, this.transform.rotation), 0.1f);
                 }
 
                 for (int i = 1; i <= poison; i++)

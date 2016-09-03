@@ -52,7 +52,7 @@ public class maincharacontrol : MonoBehaviour
     private bool vyes;
     private bool yyes; 
     
-    public Sprite[] baseimage=new Sprite[8];
+    public Sprite[] baseimage=new Sprite[9];
 
     public int[][] mazedir = new int[37][];
     public int[][] mazerep = new int[37][];
@@ -102,7 +102,7 @@ public class maincharacontrol : MonoBehaviour
     void Start()
     {
         creephp = new int[27] {
-            0,3,8,20,25,30,100,100,110,120,900,300,500,800,1300,400,1200,1000,1800,2000,7500,6000,8000,4000,8000,3000,9000
+            0,3,8,20,25,70,200,400,510,720,1200,1300,1500,1800,2300,3400,4200,1000,1800,2000,7500,6000,8000,4000,8000,3000,9000
         };
 
         //creepspeed = new float[10] {
@@ -191,7 +191,7 @@ public class maincharacontrol : MonoBehaviour
         //6--jadeite
         //7--opal
         
-        basename = new string[8] {"Empty ground",
+        basename = new string[8] {"Empty",
         "Grey Gem",
             "Red Gem",
             "Blue Gem",
@@ -727,13 +727,13 @@ public class maincharacontrol : MonoBehaviour
             case -1:
                 towername.text = "Wall";
                 towerlevel.text = "";
-                towerimage.GetComponent<Image>().sprite = baseimage[0];
+                towerimage.GetComponent<Image>().sprite = baseimage[8];
                 
                 towerdescription.text = "An unless wall just to block those stupid creeps.";
                 break;
             default:
                 towername.text = basename[mazerep[curx][cury]];
-                towerlevel.text = "Level " + mazelv[curx][cury].ToString();
+                towerlevel.text = mazelv[curx][cury].ToString();
                 towerdescription.text = basedescription[mazerep[curx][cury]];
                 //Debug.Log(mazerep[curx][cury]);
                 towerimage.GetComponent<Image>().sprite = baseimage[mazerep[curx][cury]];

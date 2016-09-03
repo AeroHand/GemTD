@@ -61,6 +61,8 @@ public class monsterbehavior : MonoBehaviour {
         //update health bar
         gbar.transform.localScale = new Vector3(health / fullhealth*0.8F, 0.101F,0.101F);
         gbar.transform.position = hbar.transform.position + Vector3.left * (fullhealth-health)/(fullhealth*2)*0.8F*2;
+        
+        
         //thispos = c2.basevector.transform.position+Vector3.right * c2.pathx[pathnum] * 2 + Vector3.back * c2.pathy[pathnum] * 2;
         //thispos = transform.position;
         nextpos = c2.basevector.transform.position+Vector3.right * c2.pathx[pathnum + 1] * 2 + Vector3.back * c2.pathy[pathnum + 1] * 2;
